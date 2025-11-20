@@ -1,80 +1,461 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZHANGYUBANG | Personal Homepage</title>
-  <style>
-    body {
-      font-family: "Helvetica Neue", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #fafafa;
-      color: #333;
-      text-align: center;
-    }
-    header {
-      padding: 80px 20px 40px;
-    }
-    h1 {
-      font-size: 2.5em;
-      margin: 0 0 10px;
-    }
-    h2 {
-      font-size: 1.2em;
-      font-weight: 400;
-      color: #666;
-      margin-top: 0;
-    }
-    section {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
-    }
-    .projects {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      transition: transform 0.2s ease;
-    }
-    .card:hover {
-      transform: translateY(-4px);
-    }
-    footer {
-      margin-top: 60px;
-      padding: 20px;
-      font-size: 0.9em;
-      color: #888;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的学业仪表盘</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            gap: 20px;
+            height: 100%;
+        }
+
+        /* 布局：左侧日历，右侧功能区 */
+        .left-panel {
+            flex: 2;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 通用卡片样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        h2, h3 { margin-top: 0; color: var(--primary-color); }
+
+        /* --- 日历样式 --- */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-header button {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--primary-color);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .day-name {
+            font-weight: bold;
+            text-align: center;
+            color: #888;
+            padding-bottom: 10px;
+        }
+        .day {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 80px;
+            cursor: pointer;
+            transition: background 0.2s;
+            position: relative;
+        }
+        .day:hover { background-color: #f9f9f9; }
+        .day.today { border: 2px solid var(--primary-color); }
+        .event-dot {
+            font-size: 12px;
+            background: #ffecd1;
+            color: #d35400;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* --- 作业部分样式 --- */
+        .homework-section { flex: 1; display: flex; flex-direction: column; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        button.add-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .tabs { display: flex; gap: 15px; margin-bottom: 10px; border-bottom: 2px solid #eee; }
+        .tab { cursor: pointer; padding-bottom: 5px; opacity: 0.5; }
+        .tab.active { border-bottom: 2px solid var(--primary-color); opacity: 1; font-weight: bold; }
+        
+        .task-list { overflow-y: auto; flex: 1; list-style: none; padding: 0; }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .task-item.completed span { text-decoration: line-through; color: #999; }
+        .task-item input[type="checkbox"] { margin-right: 10px; }
+        .delete-btn { margin-left: auto; color: #e74c3c; cursor: pointer; font-size: 0.9em; }
+
+        /* --- 课表样式 --- */
+        .timetable-section { flex: 1; overflow: auto; }
+        table.timetable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .timetable th, .timetable td {
+            border: 1px solid #eee;
+            padding: 8px;
+            text-align: center;
+        }
+        .timetable th { background-color: #f4f4f4; }
+        .timetable td { height: 40px; }
+
+        /* --- 弹窗样式 --- */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 100; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; 
+            padding: 20px; 
+            border-radius: 12px;
+            width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close { float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .container { flex-direction: column; height: auto; }
+            body { height: auto; }
+            .left-panel, .right-panel { width: 100%; }
+        }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>ZHANGYUBANG (장욱방)</h1>
-  <h2>고려대학교 정보대학 컴퓨터학과 재학 중</h2>
-  <h2>Undergraduate Student, Computer Science, College of Informatics, Korea University</h2>
-</header>
-
-  <section>
-    <h2>Projects</h2>
-    <div class="projects">
-      <div class="card">Project 1 (Coming soon)</div>
-      <div class="card">Project 2 (Coming soon)</div>
-      <div class="card">Project 3 (Coming soon)</div>
+<div class="container">
+    <div class="left-panel">
+        <div class="calendar-header">
+            <button id="prevMonth">&lt;</button>
+            <h2 id="monthYear"></h2>
+            <button id="nextMonth">&gt;</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+            </div>
     </div>
-  </section>
 
-  <footer>
-    © 2025 ZHANGYUBANG. All rights reserved.
-  </footer>
+    <div class="right-panel">
+        
+        <div class="card homework-section">
+            <h3>📝 作业 & 任务</h3>
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="输入作业 (例如: 高数第三章)">
+                <button class="add-btn" onclick="addTask()">添加</button>
+            </div>
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('active')">进行中</div>
+                <div class="tab" onclick="switchTab('completed')">历史记录</div>
+            </div>
+            <ul class="task-list" id="taskList">
+                </ul>
+        </div>
+
+        <div class="card timetable-section">
+            <h3>📅 本学期课表</h3>
+            <table class="timetable">
+                <thead>
+                    <tr>
+                        <th>节次</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1-2</td>
+                        <td>高等数学</td>
+                        <td>英语</td>
+                        <td></td>
+                        <td>高等数学</td>
+                        <td>大学物理</td>
+                    </tr>
+                    <tr>
+                        <td>3-4</td>
+                        <td>线性代数</td>
+                        <td></td>
+                        <td>计算机基础</td>
+                        <td></td>
+                        <td>体育</td>
+                    </tr>
+                    <tr>
+                        <td>5-6</td>
+                        <td></td>
+                        <td>数据结构</td>
+                        <td>马克思主义</td>
+                        <td>数据结构</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td>7-8</td>
+                        <td>选修课</td>
+                        <td></td>
+                        <td></td>
+                        <td>英语</td>
+                        <td>班会</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="eventModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h3>添加备注</h3>
+        <p id="selectedDateDisplay"></p>
+        <input type="text" id="eventInput" placeholder="例如: 微积分期中考" style="width: 90%; margin-bottom: 10px;">
+        <button class="add-btn" onclick="saveEvent()" style="width: 100%">保存</button>
+        <button class="delete-btn" onclick="deleteEventsForDay()" style="margin-top:10px; display:block; width:100%; text-align:center; background:none; border:none;">清空当日备注</button>
+    </div>
+</div>
+
+<script>
+    // --- 全局数据与本地存储 ---
+    let currentDate = new Date();
+    let tasks = JSON.parse(localStorage.getItem('myTasks')) || [];
+    let events = JSON.parse(localStorage.getItem('myEvents')) || {}; // 格式: { "2023-11-21": ["考试"] }
+    let currentTab = 'active';
+    let selectedDateKey = null;
+
+    // --- 初始化 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderCalendar();
+        renderTasks();
+        
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+    });
+
+    // --- 日历逻辑 ---
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const monthYear = document.getElementById('monthYear');
+        grid.innerHTML = '';
+
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        monthYear.innerText = `${year}年 ${month + 1}月`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // 星期头
+        const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        weekDays.forEach(day => {
+            const div = document.createElement('div');
+            div.className = 'day-name';
+            div.innerText = day;
+            grid.appendChild(div);
+        });
+
+        // 空白格
+        for (let i = 0; i < firstDay; i++) {
+            grid.appendChild(document.createElement('div'));
+        }
+
+        // 日期格
+        const todayStr = new Date().toISOString().split('T')[0];
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day';
+            
+            const dateKey = `${year}-${String(month+1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+            
+            if (dateKey === todayStr) dayDiv.classList.add('today');
+
+            dayDiv.innerHTML = `<div>${i}</div>`;
+            
+            // 渲染该日期的事件
+            if (events[dateKey]) {
+                events[dateKey].forEach(evt => {
+                    const dot = document.createElement('div');
+                    dot.className = 'event-dot';
+                    dot.innerText = evt;
+                    dayDiv.appendChild(dot);
+                });
+            }
+
+            dayDiv.onclick = () => openModal(dateKey);
+            grid.appendChild(dayDiv);
+        }
+    }
+
+    // --- 弹窗逻辑 ---
+    function openModal(dateKey) {
+        selectedDateKey = dateKey;
+        document.getElementById('selectedDateDisplay').innerText = `日期: ${dateKey}`;
+        document.getElementById('eventInput').value = '';
+        document.getElementById('eventModal').style.display = "block";
+        document.getElementById('eventInput').focus();
+    }
+
+    function closeModal() {
+        document.getElementById('eventModal').style.display = "none";
+    }
+
+    function saveEvent() {
+        const text = document.getElementById('eventInput').value.trim();
+        if (text) {
+            if (!events[selectedDateKey]) events[selectedDateKey] = [];
+            events[selectedDateKey].push(text);
+            localStorage.setItem('myEvents', JSON.stringify(events));
+            renderCalendar();
+            closeModal();
+        }
+    }
+
+    function deleteEventsForDay() {
+        if (confirm('确定清空这一天的备注吗？')) {
+            delete events[selectedDateKey];
+            localStorage.setItem('myEvents', JSON.stringify(events));
+            renderCalendar();
+            closeModal();
+        }
+    }
+
+    // 点击窗口外部关闭弹窗
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('eventModal')) {
+            closeModal();
+        }
+    }
+
+    // --- 作业逻辑 ---
+    function addTask() {
+        const input = document.getElementById('taskInput');
+        const text = input.value.trim();
+        if (text) {
+            tasks.push({ id: Date.now(), text: text, completed: false });
+            saveTasks();
+            input.value = '';
+            renderTasks();
+        }
+    }
+
+    function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.completed = !task.completed;
+            saveTasks();
+            renderTasks();
+        }
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+        renderTasks();
+    }
+
+    function saveTasks() {
+        localStorage.setItem('myTasks', JSON.stringify(tasks));
+    }
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        // 这里简单粗暴地根据文本内容判断，实际项目可用ID
+        const index = tab === 'active' ? 0 : 1;
+        document.querySelectorAll('.tab')[index].classList.add('active');
+        renderTasks();
+    }
+
+    function renderTasks() {
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
+        
+        const filteredTasks = tasks.filter(t => 
+            currentTab === 'active' ? !t.completed : t.completed
+        );
+        
+        // 历史记录按完成时间倒序（这里简单按ID倒序）
+        if (currentTab === 'completed') filteredTasks.reverse();
+
+        filteredTasks.forEach(t => {
+            const li = document.createElement('li');
+            li.className = `task-item ${t.completed ? 'completed' : ''}`;
+            li.innerHTML = `
+                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
+                <span>${t.text}</span>
+                <span class="delete-btn" onclick="deleteTask(${t.id})">删除</span>
+            `;
+            list.appendChild(li);
+        });
+    }
+</script>
 
 </body>
 </html>
