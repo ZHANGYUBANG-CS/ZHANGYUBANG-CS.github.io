@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的学业管理</title>
+    <style>
+        :root {
+            --primary: #3b82f6;   /* 亮蓝色 */
+            --primary-dark: #2563eb;
+            --bg-color: #f3f4f6;  /* 浅灰背景 */
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            /* 添加一点简约的背景图案 */
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            gap: 20px;
+            height: 90vh;
+        }
+
+        /* 通用卡片样式 */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            border-top: 4px solid var(--primary); /* 顶部装饰条 */
+        }
+
+        h3 {
+            margin-top: 0;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        /* 按钮通用样式 */
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--primary-dark); }
+        .btn-danger { background-color: var(--text-light); font-size: 12px; padding: 4px 8px; }
+        .btn-danger:hover { background-color: var(--danger); }
+
+        /* 输入框通用样式 */
+        input, select {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+        }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+
+        /* --- 左侧布局 --- */
+        .left-panel { flex: 3; overflow: hidden; }
+        
+        .calendar-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+        }
+        .calendar-header h2 { margin: 0; color: var(--text-main); font-size: 1.5em; }
+        .calendar-btn { background: none; border: 1px solid #e5e7eb; cursor: pointer; border-radius: 50%; width: 32px; height: 32px; color: var(--text-light); }
+        .calendar-btn:hover { background: #f3f4f6; color: var(--primary); }
+
+        .calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+            flex: 1; overflow-y: auto;
+        }
+        .day-name { text-align: center; font-weight: bold; color: var(--text-light); font-size: 0.9em; padding-bottom: 5px; }
+        
+        .day-cell {
+            background: #fff; border: 1px solid #f3f4f6; border-radius: 8px;
+            min-height: 90px; padding: 6px; position: relative;
+            transition: 0.2s;
+        }
+        .day-cell:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .day-cell.today { background-color: #eff6ff; border: 1px solid var(--primary); }
+        .day-num { font-weight: bold; font-size: 1.1em; margin-bottom: 4px; display: block; }
+
+        /* 日历标签 */
+        .tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-top: 3px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tag.hw { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; } /* 绿色-作业 */
+        .tag.mid { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; } /* 橙色-期中 */
+        .tag.final { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; } /* 红色-期末 */
+
+        /* --- 右侧布局 --- */
+        .right-panel { flex: 2; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; padding-right: 5px; }
+
+        /* 1. 作业 */
+        .task-input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .task-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; max-height: 200px; }
+        .task-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px; border-bottom: 1px solid #f3f4f6;
+        }
+        .task-item.completed span { text-decoration: line-through; color: #9ca3af; }
+        .ddl-tag { font-size: 12px; color: var(--primary); background: #eff6ff; padding: 2px 6px; border-radius: 10px; margin-right: 8px; }
+
+        /* 2. 考试 (自动生成) */
+        .exam-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+        .exam-item {
+            background: #f9fafb; padding: 10px; border-radius: 8px;
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; align-items: center;
+        }
+        .exam-item label { font-weight: bold; color: var(--text-main); }
+        .date-label { font-size: 12px; color: var(--text-light); display: block; margin-bottom: 2px; }
+
+        /* 3. 课表 */
+        .timetable-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; background: #f9fafb; padding: 10px; border-radius: 8px; }
+        .timetable-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; overflow-x: auto; min-height: 300px; }
+        .timetable-col { min-width: 90px; background: #f9fafb; border-radius: 6px; padding: 4px; }
+        .col-header { text-align: center; font-weight: bold; color: var(--text-light); font-size: 12px; padding: 5px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 5px; }
+        
+        .course-card {
+            background: white; border-left: 3px solid var(--primary);
+            padding: 6px; margin-bottom: 6px; border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05); cursor: pointer;
+            position: relative;
+        }
+        .course-card:hover { background: #eff6ff; }
+        .course-card:hover .del-course-btn { display: block; }
+        .del-course-btn {
+            display: none; position: absolute; top: 2px; right: 2px;
+            color: var(--danger); font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .c-time { font-size: 11px; color: var(--text-light); display: block; }
+        .c-name { font-weight: bold; font-size: 12px; color: var(--text-main); display: block; }
+
+        /* 滚动条优化 */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; height: auto; }
+            .left-panel, .right-panel { overflow: visible; height: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card left-panel">
+        <div class="calendar-header">
+            <button class="calendar-btn" id="prevMonth">‹</button>
+            <h2 id="monthYear">2025年 12月</h2>
+            <button class="calendar-btn" id="nextMonth">›</button>
+        </div>
+        <div class="calendar-grid" id="calendarGrid">
+            </div>
+    </div>
+
+    <div class="right-panel">
+        
+        <div class="card">
+            <h3>📝 作业任务</h3>
+            <div class="task-input-group">
+                <input type="text" id="taskInput" placeholder="作业内容 (如: 高数第三章)" style="flex:2">
+                <input type="date" id="taskDate" style="flex:1">
+                <button class="btn" onclick="addTask()">添加</button>
+            </div>
+            <ul class="task-list" id="taskList"></ul>
+        </div>
+
+        <div class="card">
+            <h3>⚡ 考试安排 (根据课表自动生成)</h3>
+            <div class="exam-list" id="examList">
+                <p style="color:#999; text-align:center; font-size:14px;">请先在下方添加课程，这里会自动出现科目</p>
+            </div>
+        </div>
+
+        <div class="card" style="flex: 1;">
+            <h3>📅 本学期课表</h3>
+            <div class="timetable-controls">
+                <select id="courseDay" style="width:80px;">
+                    <option value="1">周一</option>
+                    <option value="2">周二</option>
+                    <option value="3">周三</option>
+                    <option value="4">周四</option>
+                    <option value="5">周五</option>
+                    <option value="6">周六</option>
+                    <option value="0">周日</option>
+                </select>
+                <input type="time" id="courseStart" style="width:90px;">
+                <span style="display:flex;align-items:center">-</span>
+                <input type="time" id="courseEnd" style="width:90px;">
+                <input type="text" id="courseName" placeholder="课程名称" style="flex:1; min-width:100px;">
+                <button class="btn" onclick="addCourse()">添加课程</button>
+            </div>
+            <div class="timetable-grid" id="timetableGrid">
+                </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // --- 核心数据 ---
+    let currentDate = new Date();
+    let tasks = JSON.parse(localStorage.getItem('simple_tasks')) || [];
+    let courses = JSON.parse(localStorage.getItem('simple_courses')) || [];
+    // 考试数据结构: { "高等数学": { mid: "2025-11-01", final: "2025-12-20" } }
+    let exams = JSON.parse(localStorage.getItem('simple_exams')) || {};
+
+    // --- 初始化 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderAll();
+        
+        document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
+        document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+    });
+
+    function renderAll() {
+        renderTimetable(); // 1. 先渲染课表
+        renderExamList();  // 2. 根据课表生成考试输入框
+        renderTasks();     // 3. 渲染作业
+        renderCalendar();  // 4. 最后渲染日历 (汇总所有日期)
+    }
+
+    // --- 1. 课表逻辑 ---
+    function addCourse() {
+        const day = document.getElementById('courseDay').value;
+        const start = document.getElementById('courseStart').value;
+        const end = document.getElementById('courseEnd').value;
+        const name = document.getElementById('courseName').value.trim();
+
+        if(day && start && end && name) {
+            courses.push({ id: Date.now(), day, start, end, name });
+            localStorage.setItem('simple_courses', JSON.stringify(courses));
+            document.getElementById('courseName').value = ''; // 清空输入框
+            renderAll();
+        } else {
+            alert("请填写完整的课程信息");
+        }
+    }
+
+    function deleteCourse(id) {
+        if(confirm("确定删除这门课吗？")) {
+            courses = courses.filter(c => c.id !== id);
+            localStorage.setItem('simple_courses', JSON.stringify(courses));
+            renderAll();
+        }
+    }
+
+    function renderTimetable() {
+        const grid = document.getElementById('timetableGrid');
+        grid.innerHTML = '';
+        
+        const dayLabels = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const dayOrder = [1, 2, 3, 4, 5, 6, 0]; // 按照周一到周日排序
+        
+        dayOrder.forEach(dayIdx => {
+            const col = document.createElement('div');
+            col.className = 'timetable-col';
+            col.innerHTML = `<div class="col-header">${dayLabels[dayIdx]}</div>`;
+            
+            // 筛选当天的课并排序
+            const dayCourses = courses.filter(c => c.day == dayIdx).sort((a,b) => a.start.localeCompare(b.start));
+            
+            dayCourses.forEach(c => {
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <span class="del-course-btn" onclick="deleteCourse(${c.id})">×</span>
+                    <span class="c-time">${c.start}-${c.end}</span>
+                    <span class="c-name">${c.name}</span>
+                `;
+                col.appendChild(card);
+            });
+            grid.appendChild(col);
+        });
+    }
+
+    // --- 2. 考试安排逻辑 (自动映射) ---
+    function renderExamList() {
+        const list = document.getElementById('examList');
+        list.innerHTML = '';
+        
+        // 获取去重后的课程名列表
+        const uniqueSubjects = [...new Set(courses.map(c => c.name))];
+
+        if (uniqueSubjects.length === 0) {
+            list.innerHTML = '<p style="color:#999; text-align:center; font-size:14px; padding:20px;">暂无课程，请先在下方添加课程</p>';
+            return;
+        }
+
+        uniqueSubjects.forEach(subject => {
+            const data = exams[subject] || { mid: '', final: '' };
+            
+            const item = document.createElement('div');
+            item.className = 'exam-item';
+            item.innerHTML = `
+                <label>${subject}</label>
+                <div>
+                    <span class="date-label">期中考试</span>
+                    <input type="date" style="width:100%" value="${data.mid}" onchange="updateExam('${subject}', 'mid', this.value)">
+                </div>
+                <div>
+                    <span class="date-label">期末考试</span>
+                    <input type="date" style="width:100%" value="${data.final}" onchange="updateExam('${subject}', 'final', this.value)">
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    function updateExam(subject, type, dateStr) {
+        if (!exams[subject]) exams[subject] = {};
+        exams[subject][type] = dateStr;
+        localStorage.setItem('simple_exams', JSON.stringify(exams));
+        renderCalendar(); // 刷新日历显示
+    }
+
+    // --- 3. 作业逻辑 ---
+    function addTask() {
+        const text = document.getElementById('taskInput').value.trim();
+        const date = document.getElementById('taskDate').value;
+        if(text) {
+            tasks.push({ id: Date.now(), text, date, completed: false });
+            localStorage.setItem('simple_tasks', JSON.stringify(tasks));
+            document.getElementById('taskInput').value = '';
+            renderTasks();
+            renderCalendar(); // 刷新日历上的DDL标记
+        }
+    }
+
+    function toggleTask(id) {
+        const t = tasks.find(i => i.id === id);
+        if(t) { t.completed = !t.completed; localStorage.setItem('simple_tasks', JSON.stringify(tasks)); renderTasks(); }
+    }
+
+    function deleteTask(id) {
+        tasks = tasks.filter(i => i.id !== id);
+        localStorage.setItem('simple_tasks', JSON.stringify(tasks));
+        renderTasks();
+        renderCalendar();
+    }
+
+    function renderTasks() {
+        const ul = document.getElementById('taskList');
+        ul.innerHTML = '';
+        // 未完成排前面
+        tasks.sort((a,b) => a.completed - b.completed).forEach(t => {
+            const li = document.createElement('li');
+            li.className = `task-item ${t.completed ? 'completed' : ''}`;
+            li.innerHTML = `
+                <div style="display:flex; align-items:center;">
+                    <input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask(${t.id})" style="margin-right:10px;">
+                    ${t.date ? `<span class="ddl-tag">截止: ${t.date.slice(5)}</span>` : ''}
+                    <span>${t.text}</span>
+                </div>
+                <button class="btn btn-danger" onclick="deleteTask(${t.id})">删除</button>
+            `;
+            ul.appendChild(li);
+        });
+    }
+
+    // --- 4. 日历逻辑 ---
+    function changeMonth(offset) {
+        currentDate.setMonth(currentDate.getMonth() + offset);
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        document.getElementById('monthYear').innerText = `${year}年 ${month + 1}月`;
+        
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+        
+        // 星期头
+        const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        weekDays.forEach(d => {
+            const div = document.createElement('div');
+            div.className = 'day-name';
+            div.innerText = d;
+            grid.appendChild(div);
+        });
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // 补空白
+        for(let i=0; i<firstDay; i++) grid.appendChild(document.createElement('div'));
+
+        // 生成日期
+        for(let i=1; i<=daysInMonth; i++) {
+            const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            const cell = document.createElement('div');
+            cell.className = `day-cell ${dateKey === todayStr ? 'today' : ''}`;
+            
+            let html = `<span class="day-num">${i}</span>`;
+            
+            // 1. 显示作业DDL
+            tasks.forEach(t => {
+                if(!t.completed && t.date === dateKey) {
+                    html += `<span class="tag hw">📝 ${t.text}</span>`;
+                }
+            });
+
+            // 2. 显示考试
+            Object.keys(exams).forEach(subj => {
+                if(exams[subj].mid === dateKey) html += `<span class="tag mid">⚡ ${subj}期中</span>`;
+                if(exams[subj].final === dateKey) html += `<span class="tag final">🔥 ${subj}期末</span>`;
+            });
+
+            cell.innerHTML = html;
+            grid.appendChild(cell);
+        }
+    }
+</script>
+</body>
+</html>
