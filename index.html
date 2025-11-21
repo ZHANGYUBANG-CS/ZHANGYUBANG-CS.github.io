@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>特种战术 - 2D生存射击</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            pointer-events: none;
+        }
+        .hud-text {
+            font-size: 18px;
+            text-shadow: 1px 1px 2px #000;
+            margin-bottom: 5px;
+        }
+        #weapon-info {
+            color: #00ffcc;
+        }
+        #health-bar-container {
+            width: 200px;
+            height: 10px;
+            background: #333;
+            border: 1px solid #555;
+            margin-bottom: 10px;
+        }
+        #health-bar {
+            width: 100%;
+            height: 100%;
+            background: #c0392b;
+            transition: width 0.2s;
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #777;
+            font-size: 14px;
+            text-align: center;
+        }
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+
+<div id="ui-layer">
+    <div id="health-bar-container"><div id="health-bar"></div></div>
+    <div class="hud-text" id="score">击杀: 0</div>
+    <div class="hud-text" id="weapon-info">武器: 手枪 (按 1-3 切换)</div>
+</div>
+
+<div id="instructions">
+    WASD 移动 | 鼠标 瞄准/射击 | 1: 手枪 2:步枪 3: 霰弹枪
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- 配置与状态 ---
+    let width, height;
+    
+    const keys = { w: false, a: false, s: false, d: false };
+    const mouse = { x: 0, y: 0, down: false };
+    
+    let score = 0;
+    let gameActive = true;
+
+    // --- 武器数据 ---
+    const weapons = {
+        1: { name: "Pistol (手枪)", damage: 25, fireRate: 400, color: '#f1c40f', spread: 0.05, speed: 12, count: 1, auto: false },
+        2: { name: "Assault Rifle (突击步枪)", damage: 10, fireRate: 100, color: '#e67e22', spread: 0.1, speed: 15, count: 1, auto: true },
+        3: { name: "Shotgun (霰弹枪)", damage: 8, fireRate: 900, color: '#e74c3c', spread: 0.4, speed: 10, count: 6, auto: false }
+    };
+
+    // --- 类定义 ---
+
+    class Player {
+        constructor() {
+            this.x = window.innerWidth / 2;
+            this.y = window.innerHeight / 2;
+            this.radius = 15;
+            this.speed = 4;
+            this.color = '#3498db';
+            this.hp = 100;
+            this.maxHp = 100;
+            this.weapon = 1; // 当前武器ID
+            this.lastShotTime = 0;
+        }
+
+        draw() {
+            // 身体
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            
+            // 计算面向角度
+            const angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+            ctx.rotate(angle);
+
+            // 战术手电筒效果
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, 300, -0.3, 0.3);
+            ctx.fillStyle = 'rgba(255, 255, 200, 0.1)';
+            ctx.fill();
+
+            // 角色圆形
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#2c3e50'; // 深色战术服
+            ctx.fill();
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 手部/枪械指示器
+            ctx.fillStyle = '#95a5a6';
+            ctx.fillRect(10, -3, 20, 6); // 枪管
+
+            ctx.restore();
+        }
+
+        update() {
+            if (keys.w && this.y > this.radius) this.y -= this.speed;
+            if (keys.s && this.y < height - this.radius) this.y += this.speed;
+            if (keys.a && this.x > this.radius) this.x -= this.speed;
+            if (keys.d && this.x < width - this.radius) this.x += this.speed;
+
+            // 射击逻辑
+            const wData = weapons[this.weapon];
+            const now = Date.now();
+            
+            if (mouse.down && now - this.lastShotTime > wData.fireRate) {
+                if (!wData.auto) mouse.down = false; // 半自动武器需重置点击
+                this.shoot(wData);
+                this.lastShotTime = now;
+            }
+        }
+
+        shoot(wData) {
+            const angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+            
+            // 后坐力震动
+            screenShake = 3;
+
+            for(let i=0; i<wData.count; i++) {
+                // 计算散布
+                const spreadAngle = angle + (Math.random() - 0.5) * wData.spread;
+                const velocity = {
+                    x: Math.cos(spreadAngle) * wData.speed,
+                    y: Math.sin(spreadAngle) * wData.speed
+                };
+                bullets.push(new Bullet(this.x, this.y, velocity, wData.damage, wData.color));
+            }
+            
+            // 枪口闪光
+            particles.push(new Particle(this.x + Math.cos(angle)*30, this.y + Math.sin(angle)*30, 0, 0, '#fff', 5));
+        }
+    }
+
+    class Bullet {
+        constructor(x, y, velocity, damage, color) {
+            this.x = x;
+            this.y = y;
+            this.velocity = velocity;
+            this.radius = 3;
+            this.damage = damage;
+            this.color = color;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
+
+        update() {
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+        }
+    }
+
+    class Enemy {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 15;
+            this.color = '#e74c3c';
+            this.speed = 1.5 + Math.random(); // 随机速度
+            this.hp = 50;
+        }
+
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            // 僵尸/敌人颜色 - 暗红色
+            ctx.fillStyle = `rgba(150, 40, 40, ${this.hp / 50 + 0.2})`;
+            ctx.fill();
+            ctx.strokeStyle = '#330000';
+            ctx.stroke();
+        }
+
+        update() {
+            const angle = Math.atan2(player.y - this.y, player.x - this.x);
+            this.x += Math.cos(angle) * this.speed;
+            this.y += Math.sin(angle) * this.speed;
+        }
+    }
+
+    class Particle {
+        constructor(x, y, vx, vy, color, life) {
+            this.x = x;
+            this.y = y;
+            this.velocity = {x: vx, y: vy};
+            this.color = color;
+            this.life = life;
+            this.alpha = 1;
+        }
+        
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, 3, 3);
+            ctx.restore();
+        }
+        
+        update() {
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+            this.alpha -= 0.05; // 渐隐
+            this.life--;
+        }
+    }
+
+    // --- 游戏核心变量 ---
+    let player = new Player();
+    let bullets = [];
+    let enemies = [];
+    let particles = [];
+    let screenShake = 0;
+    let enemySpawnRate = 100; // 帧数间隔
+    let frame = 0;
+
+    // --- 初始化与事件 ---
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'w' || e.key === 'W') keys.w = true;
+        if (e.key === 'a' || e.key === 'A') keys.a = true;
+        if (e.key === 's' || e.key === 'S') keys.s = true;
+        if (e.key === 'd' || e.key === 'D') keys.d = true;
+        if (['1', '2', '3'].includes(e.key)) {
+            player.weapon = parseInt(e.key);
+            document.getElementById('weapon-info').innerText = "武器: " + weapons[player.weapon].name;
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.key === 'w' || e.key === 'W') keys.w = false;
+        if (e.key === 'a' || e.key === 'A') keys.a = false;
+        if (e.key === 's' || e.key === 'S') keys.s = false;
+        if (e.key === 'd' || e.key === 'D') keys.d = false;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+
+    window.addEventListener('mousedown', () => mouse.down = true);
+    window.addEventListener('mouseup', () => mouse.down = false);
+
+    // --- 游戏循环 ---
+    function spawnEnemy() {
+        // 在屏幕边缘随机生成
+        let x, y;
+        if (Math.random() < 0.5) {
+            x = Math.random() < 0.5 ? -30 : width + 30;
+            y = Math.random() * height;
+        } else {
+            x = Math.random() * width;
+            y = Math.random() < 0.5 ? -30 : height + 30;
+        }
+        enemies.push(new Enemy(x, y));
+    }
+
+    function createBlood(x, y) {
+        for(let i=0; i<8; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 3;
+            particles.push(new Particle(
+                x, y, 
+                Math.cos(angle) * speed, 
+                Math.sin(angle) * speed, 
+                '#8a0303', 
+                20
+            ));
+        }
+    }
+
+    function animate() {
+        if (!gameActive) return;
+        requestAnimationFrame(animate);
+
+        // 背景清屏（带拖影效果，增加动态感）
+        ctx.fillStyle = 'rgba(17, 17, 17, 0.4)';
+        ctx.fillRect(0, 0, width, height);
+
+        // 屏幕震动处理
+        if (screenShake > 0) {
+            ctx.save();
+            const dx = (Math.random() - 0.5) * screenShake;
+            const dy = (Math.random() - 0.5) * screenShake;
+            ctx.translate(dx, dy);
+            screenShake *= 0.9;
+        }
+
+        // 网格线装饰 (增加战术感)
+        ctx.strokeStyle = '#222';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i=0; i<width; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,height); }
+        for(let i=0; i<height; i+=100) { ctx.moveTo(0,i); ctx.lineTo(width,i); }
+        ctx.stroke();
+
+        // 更新玩家
+        player.update();
+        player.draw();
+
+        // 更新子弹
+        bullets.forEach((bullet, index) => {
+            bullet.update();
+            bullet.draw();
+            
+            // 移除出界子弹
+            if (bullet.x < 0 || bullet.x > width || bullet.y < 0 || bullet.y > height) {
+                bullets.splice(index, 1);
+            }
+        });
+
+        // 生成敌人
+        frame++;
+        if (frame % enemySpawnRate === 0) {
+            spawnEnemy();
+            if(enemySpawnRate > 20) enemySpawnRate--; // 难度递增
+        }
+
+        // 更新敌人与碰撞检测
+        enemies.forEach((enemy, index) => {
+            enemy.update();
+            enemy.draw();
+
+            // 玩家碰撞
+            const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+            if (dist < player.radius + enemy.radius) {
+                player.hp -= 1; // 持续伤害
+                screenShake = 5;
+                document.getElementById('health-bar').style.width = player.hp + '%';
+                
+                if (player.hp <= 0) {
+                    gameActive = false;
+                    alert("任务失败! 存活得分: " + score);
+                    location.reload();
+                }
+            }
+
+            // 子弹击中敌人
+            bullets.forEach((bullet, bIndex) => {
+                const bDist = Math.hypot(bullet.x - enemy.x, bullet.y - enemy.y);
+                if (bDist < enemy.radius + bullet.radius) {
+                    // 击中
+                    enemy.hp -= bullet.damage;
+                    bullets.splice(bIndex, 1); // 移除子弹
+                    createBlood(enemy.x, enemy.y); // 血液特效
+
+                    if (enemy.hp <= 0) {
+                        enemies.splice(index, 1);
+                        score++;
+                        document.getElementById('score').innerText = "击杀: " + score;
+                    }
+                }
+            });
+        });
+
+        // 粒子特效
+        particles.forEach((p, index) => {
+            if (p.life <= 0 || p.alpha <= 0) particles.splice(index, 1);
+            else {
+                p.update();
+                p.draw();
+            }
+        });
+
+        if (screenShake > 0) ctx.restore();
+    }
+
+    animate();
+</script>
+</body>
+</html>
