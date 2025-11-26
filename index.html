@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lychee App Presentation v2</title>
+    <title>Lychee App Ultimate Demo</title>
     <style>
         /* --- 基础样式 --- */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
@@ -21,359 +21,345 @@
         /* --- 通用组件 --- */
         .status-bar { height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 14px; font-weight: 600; z-index: 1000; position: absolute; top: 0; width: 100%; pointer-events: none; mix-blend-mode: difference; color: #fff; }
         .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden; }
-        .screen.active { display: flex; animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
-        .screen.sub-page { z-index: 200; background: #f9f9f9; }
+        .screen.active { display: flex; animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        .screen.sub-page { z-index: 200; background: #fff; }
 
-        @keyframes fadeIn { from { opacity: 0.8; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0.9; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes heartPop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
         /* 按钮与交互 */
-        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; transition: transform 0.1s; }
-        .btn:active { transform: scale(0.98); }
+        .btn { width: 100%; padding: 16px; border-radius: 14px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; text-align: center; }
+        .btn:active { opacity: 0.8; }
         .btn-primary { background-color: #007AFF; color: white; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
-        .btn-text { background: transparent; color: #666; font-size: 14px; margin-top: 15px; }
-        .header { height: 60px; display: flex; align-items: center; padding: 0 20px; background: #fff; position: sticky; top: 0; z-index: 10; border-bottom: 0.5px solid #eee; margin-top: 44px; }
+        .header { height: 50px; display: flex; align-items: center; padding: 0 15px; background: #fff; position: sticky; top: 0; z-index: 10; border-bottom: 0.5px solid #eee; margin-top: 44px; }
         .header-title { flex: 1; text-align: center; font-weight: bold; font-size: 17px; }
         .back-icon { font-size: 24px; width: 40px; cursor: pointer; }
 
-        /* --- 1. Onboarding (5页教程) --- */
+        /* --- 1. Onboarding --- */
         .onboard-screen { background-size: cover; background-position: center; justify-content: flex-end; padding-bottom: 50px; }
         .onboard-overlay { background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 40px 24px; color: white; border-radius: 30px 30px 0 0; }
-        .ob-title { font-size: 28px; margin-bottom: 10px; line-height: 1.2; }
-        .ob-desc { font-size: 15px; opacity: 0.8; margin-bottom: 30px; line-height: 1.5; }
         .step-indicator { display: flex; gap: 6px; margin-bottom: 20px; }
         .step { width: 6px; height: 6px; background: rgba(255,255,255,0.3); border-radius: 50%; }
         .step.active { background: #007AFF; width: 20px; border-radius: 4px; }
 
-        /* --- 2. Login --- */
-        .login-container { padding: 40px 30px; display: flex; flex-direction: column; height: 100%; justify-content: center; margin-top: -40px; }
-        .social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px; border: 1px solid #eee; background: #fff; color: #333; }
+        /* --- 2. Feed Tab (瀑布流) --- */
+        .feed-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; margin-top: 44px; background: #fff; position: sticky; top: 0; z-index: 5; }
+        .feed-tabs { display: flex; gap: 20px; font-size: 16px; color: #999; }
+        .feed-tabs .active { color: #333; font-weight: bold; position: relative; }
+        .feed-tabs .active::after { content:''; position:absolute; bottom:-4px; left:50%; transform:translateX(-50%); width:20px; height:2px; background:#007AFF; }
         
-        /* --- Tab Bar --- */
-        .tab-bar { height: 84px; background: #fff; border-top: 0.5px solid #e0e0e0; display: flex; justify-content: space-around; align-items: flex-start; padding-top: 10px; position: absolute; bottom: 0; width: 100%; z-index: 99; }
-        .tab-item { display: flex; flex-direction: column; align-items: center; width: 25%; cursor: pointer; color: #999; }
-        .tab-item.active { color: #007AFF; }
-        .tab-icon { font-size: 24px; margin-bottom: 4px; }
-        .tab-text { font-size: 10px; font-weight: 500; }
+        .feed-container { padding: 10px 8px 100px; column-count: 2; column-gap: 8px; }
+        .feed-card { break-inside: avoid; background: #fff; border-radius: 8px; overflow: hidden; margin-bottom: 10px; position: relative; cursor: pointer; }
+        .feed-img { width: 100%; display: block; background: #eee; }
+        .feed-title { font-size: 13px; font-weight: 500; margin: 8px 8px 4px; line-height: 1.4; color: #333; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+        .feed-meta { display: flex; justify-content: space-between; align-items: center; padding: 0 8px 10px; }
+        .feed-user { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #666; }
+        .user-avatar-xs { width: 18px; height: 18px; border-radius: 50%; background: #ccc; }
+        .feed-likes { display: flex; align-items: center; gap: 2px; font-size: 11px; color: #999; }
 
-        /* --- Chat List --- */
+        /* --- 3. Feed Detail (仿小红书详情) --- */
+        .post-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; margin-top: 44px; }
+        .author-info { display: flex; align-items: center; gap: 10px; }
+        .author-avatar { width: 36px; height: 36px; border-radius: 50%; background: #eee; }
+        .follow-btn { border: 1px solid #ff2442; color: #ff2442; font-size: 12px; padding: 4px 12px; border-radius: 14px; font-weight: 600; background: #fff; }
+        .follow-btn.followed { border-color: #ddd; color: #999; }
+
+        .post-gallery { width: 100%; height: 450px; background: #000; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+        .post-gallery img { width: 100%; height: 100%; object-fit: cover; scroll-snap-align: center; flex-shrink: 0; }
+        .gallery-dots { display: flex; justify-content: center; gap: 6px; margin-top: -20px; position: relative; z-index: 2; margin-bottom: 10px; }
+        .g-dot { width: 6px; height: 6px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+        .g-dot.active { background: #007AFF; }
+
+        .post-content { padding: 15px; }
+        .post-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; line-height: 1.4; }
+        .post-text { font-size: 15px; line-height: 1.6; color: #333; margin-bottom: 15px; }
+        .post-tags { color: #1e3a8a; font-size: 14px; margin-bottom: 20px; }
+        .post-date { font-size: 12px; color: #999; margin-bottom: 10px; }
+
+        /* 评论区样式 */
+        .comment-section { padding: 0 15px 100px; border-top: 0.5px solid #eee; }
+        .cmt-count { font-size: 14px; font-weight: bold; margin: 15px 0; }
+        .cmt-item { display: flex; gap: 10px; margin-bottom: 20px; }
+        .cmt-avatar { width: 32px; height: 32px; border-radius: 50%; background: #eee; flex-shrink: 0; }
+        .cmt-body { flex: 1; }
+        .cmt-user { font-size: 13px; color: #666; margin-bottom: 2px; }
+        .cmt-text { font-size: 14px; color: #333; line-height: 1.4; margin-bottom: 4px; }
+        .cmt-meta { font-size: 11px; color: #999; display: flex; gap: 10px; }
+        .cmt-like { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: #999; gap: 2px; }
+
+        /* 底部互动栏 */
+        .post-footer { position: fixed; bottom: 0; width: 100%; height: 50px; background: #fff; border-top: 0.5px solid #eee; display: flex; align-items: center; padding: 0 15px; gap: 20px; padding-bottom: max(10px, env(safe-area-inset-bottom)); box-sizing: content-box; z-index: 100; }
+        .fake-input { flex: 1; height: 36px; background: #f5f5f5; border-radius: 18px; color: #999; font-size: 13px; display: flex; align-items: center; padding-left: 15px; }
+        .action-icon { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #333; cursor: pointer; }
+        .action-icon i { font-size: 24px; }
+        .action-icon.active { color: #ff2442; } /* 点赞红色 */
+        .action-icon.fav-active { color: #f5c518; } /* 收藏黄色 */
+
+        /* --- 4. Chat & Other Styles --- */
         .chat-list { padding: 0 0 100px; }
-        .chat-item { display: flex; padding: 16px 20px; border-bottom: 0.5px solid #f0f0f0; align-items: center; gap: 14px; cursor: pointer; }
-        .chat-avatar { width: 50px; height: 50px; border-radius: 50%; background: #eee; position: relative; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        .badge { position: absolute; top: -2px; right: -2px; background: #ff3b30; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; border: 2px solid #fff; }
-        .chat-content { flex: 1; }
-        .chat-name { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
-        .chat-msg { color: #888; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
-        .chat-time { font-size: 11px; color: #bbb; align-self: flex-start; margin-top: 4px; }
-
-        /* --- Chat Room UI (New) --- */
+        .chat-item { display: flex; padding: 16px 20px; border-bottom: 0.5px solid #f0f0f0; align-items: center; gap: 14px; }
         .chat-room-body { flex: 1; background: #f5f5f5; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 80px; }
-        .msg-row { display: flex; align-items: flex-end; gap: 8px; }
-        .msg-row.me { justify-content: flex-end; }
-        .msg-bubble { max-width: 70%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .msg-left { background: #fff; color: #333; border-bottom-left-radius: 4px; }
+        .msg-bubble { max-width: 70%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.4; }
+        .msg-left { background: #fff; border-bottom-left-radius: 4px; }
         .msg-right { background: #007AFF; color: #fff; border-bottom-right-radius: 4px; }
-        .msg-time { font-size: 10px; color: #999; margin-bottom: 2px; }
         
-        .chat-input-bar { position: absolute; bottom: 0; width: 100%; background: #fff; border-top: 1px solid #e0e0e0; padding: 10px 15px; display: flex; align-items: center; gap: 10px; height: 60px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
-        .chat-input { flex: 1; height: 36px; border: 1px solid #ddd; border-radius: 18px; padding: 0 15px; font-size: 14px; outline: none; background: #f9f9f9; }
-        .chat-input:focus { border-color: #007AFF; background: #fff; }
-        .chat-send-btn { width: 36px; height: 36px; border-radius: 50%; background: #007AFF; color: white; border: none; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-        /* --- Other Styles (Feed, MyPage, etc) --- */
-        .feed-container { padding: 10px 16px 100px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 0; }
-        .feed-card { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .feed-img { width: 100%; height: auto; display: block; background: #eee; }
-        .feed-info { padding: 10px; }
-        .feed-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-        .profile-header { padding: 20px 20px 30px; background: #fff; display: flex; align-items: center; gap: 16px; margin-top: 44px; }
-        .profile-avatar { width: 70px; height: 70px; border-radius: 50%; background-color: #ddd; background-size: cover; background-position: center; }
-        .menu-group { margin-top: 10px; background: #fff; padding: 0 20px; }
-        .menu-row { display: flex; justify-content: space-between; padding: 18px 0; border-bottom: 0.5px solid #eee; font-size: 15px; cursor: pointer; }
-        .banner { height: 140px; background: #f0f0f0; border-radius: 12px; margin: 10px 20px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px; background-image: url('https://placehold.co/600x300/e1f5fe/007aff?text=Seoul+Special+Offer'); background-size: cover; }
-        .cat-scroll { display: flex; overflow-x: auto; padding: 0 20px 10px; gap: 15px; scrollbar-width: none; }
-        .cat-item { min-width: 60px; height: 60px; background: #f2f2f7; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-direction: column; gap: 4px; }
-        .section-h { font-size: 18px; font-weight: 700; margin: 20px 20px 10px; }
-        .h-scroll { display: flex; overflow-x: auto; gap: 15px; padding: 0 20px 80px; }
-        .p-card { min-width: 140px; width: 140px; }
-        .p-img { width: 140px; height: 140px; border-radius: 12px; background: #eee; object-fit: cover; }
-        ::-webkit-scrollbar { display: none; }
+        .tab-bar { height: 84px; background: #fff; border-top: 0.5px solid #e0e0e0; display: flex; justify-content: space-around; padding-top: 10px; position: absolute; bottom: 0; width: 100%; z-index: 99; }
+        .tab-item { display: flex; flex-direction: column; align-items: center; width: 25%; color: #999; }
+        .tab-item.active { color: #007AFF; }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
 <div id="phone-frame">
     <div class="status-bar">
-        <span>9:41</span>
-        <span>📶 5G &nbsp; 🔋 100%</span>
+        <span>17:06</span>
+        <span>📶 5G &nbsp; 🔋 49%</span>
     </div>
 
-    <div id="ob-1" class="screen active onboard-screen" style="background-image: url('https://placehold.co/375x812/ffe0b2/e65100?text=Image:Warm+Cake');">
+    <div id="ob-1" class="screen active onboard-screen" style="background-image: url('https://placehold.co/375x812/ffe0b2/e65100?text=Warm+Moment');">
         <div class="onboard-overlay">
-            <div class="step-indicator"><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div></div>
-            <div class="ob-title">连接你的<br>韩国心意</div>
-            <div class="ob-desc">Lychee 为您精选首尔最好的蛋糕与鲜花，让爱跨越国界。</div>
-            <button class="btn btn-primary" onclick="nextOb('ob-2')">下一页</button>
-        </div>
-    </div>
-    <div id="ob-2" class="screen onboard-screen" style="background-image: url('https://placehold.co/375x812/e1f5fe/0277bd?text=Image:Discovery');">
-        <div class="onboard-overlay">
-            <div class="step-indicator"><div class="step"></div><div class="step active"></div><div class="step"></div><div class="step"></div><div class="step"></div></div>
-            <div class="ob-title">探索与发现<br>本地潮流</div>
-            <div class="ob-desc">像刷小红书一样浏览韩国本地热门店铺，实时掌握 INS 流行趋势。</div>
-            <button class="btn btn-primary" onclick="nextOb('ob-3')">下一页</button>
-        </div>
-    </div>
-    <div id="ob-3" class="screen onboard-screen" style="background-image: url('https://placehold.co/375x812/f3e5f5/7b1fa2?text=Image:Customization');">
-        <div class="onboard-overlay">
-            <div class="step-indicator"><div class="step"></div><div class="step"></div><div class="step active"></div><div class="step"></div><div class="step"></div></div>
-            <div class="ob-title">专属定制<br>随心预订</div>
-            <div class="ob-desc">支持中文填写刻字内容，自动翻译给商家，语言不再是障碍。</div>
-            <button class="btn btn-primary" onclick="nextOb('ob-4')">下一页</button>
-        </div>
-    </div>
-    <div id="ob-4" class="screen onboard-screen" style="background-image: url('https://placehold.co/375x812/e0f2f1/00695c?text=Image:Delivery');">
-        <div class="onboard-overlay">
-            <div class="step-indicator"><div class="step"></div><div class="step"></div><div class="step"></div><div class="step active"></div><div class="step"></div></div>
-            <div class="ob-title">准时送达<br>实时追踪</div>
-            <div class="ob-desc">直连 Kakao T 骑手，地图实时查看配送进度，安心直达酒店。</div>
-            <button class="btn btn-primary" onclick="nextOb('ob-5')">下一页</button>
-        </div>
-    </div>
-    <div id="ob-5" class="screen onboard-screen" style="background-image: url('https://placehold.co/375x812/fff3e0/ff6f00?text=Image:Payment');">
-        <div class="onboard-overlay">
-            <div class="step-indicator"><div class="step"></div><div class="step"></div><div class="step"></div><div class="step"></div><div class="step active"></div></div>
-            <div class="ob-title">便捷支付<br>安全无忧</div>
-            <div class="ob-desc">支持微信支付、支付宝直接结算。准备好开始了吗？</div>
-            <button class="btn btn-primary" onclick="showScreen('screen-login')">进入 Lychee</button>
+            <div class="step-indicator"><div class="step active"></div><div class="step"></div><div class="step"></div></div>
+            <h1 style="font-size:28px;margin-bottom:10px;color:white;">连接你的<br>韩国心意</h1>
+            <p style="opacity:0.8;margin-bottom:30px;color:white;">精选首尔最好的蛋糕与鲜花。</p>
+            <button class="btn btn-primary" onclick="showScreen('screen-login')">开始体验</button>
         </div>
     </div>
 
     <div id="screen-login" class="screen">
-        <div class="login-container">
-            <div style="font-size: 50px; margin-bottom: 20px; color: #007AFF; font-weight: bold;">Ly.</div>
-            <h1 style="margin-bottom: 10px;">欢迎回来</h1>
-            <p style="color: #666; margin-bottom: 50px;">登录以开始您的甜蜜旅程</p>
-            <button class="btn social-btn" onclick="login()">
-                <span style="color:#07C160; font-weight:bold;">💬</span> 微信一键登录
+        <div style="padding:40px 30px;height:100%;display:flex;flex-direction:column;justify-content:center;margin-top:-40px;">
+            <div style="font-size:50px;color:#007AFF;font-weight:bold;margin-bottom:20px;">Ly.</div>
+            <h1 style="margin-bottom:10px;">欢迎回来</h1>
+            <p style="color:#666;margin-bottom:50px;">登录以开始您的甜蜜旅程</p>
+            <button class="btn" style="border:1px solid #eee;display:flex;justify-content:center;gap:10px;margin-bottom:15px;" onclick="login()">
+                <span style="color:#07C160;">💬</span> 微信一键登录
             </button>
-            <button class="btn social-btn" style="background:#FEE500; border:none;" onclick="login()">
-                <span style="font-weight:bold;">K</span> Kakao Login
-            </button>
-            <div style="text-align: center; margin: 30px 0; color: #ccc;">- 或 -</div>
-            <button class="btn btn-primary" style="background: #333;" onclick="login(true)">游客试用 (Guest Mode)</button>
+            <button class="btn btn-primary" style="background:#333;" onclick="login(true)">游客试用 (Guest)</button>
         </div>
     </div>
 
     <div id="tab-home" class="screen">
         <div class="header">
-            <div class="header-title" style="text-align: left; font-size: 22px; color: #007AFF;">Lychee</div>
-            <div style="background: #f2f2f7; padding: 8px 12px; border-radius: 20px; font-size: 12px; color: #666; width: 140px;">🔍 搜索蛋糕/鲜花</div>
+            <div class="header-title" style="text-align:left;color:#007AFF;font-size:22px;">Lychee</div>
+            <div style="background:#f2f2f7;padding:8px 12px;border-radius:20px;font-size:12px;color:#666;">🔍 搜索蛋糕/鲜花</div>
         </div>
-        <div class="banner">本周首尔必吃榜单 TOP 10 ></div>
-        <div class="cat-scroll">
-            <div class="cat-item"><span>🍰</span><span style="font-size:10px;color:#333;">蛋糕</span></div>
-            <div class="cat-item"><span>💐</span><span style="font-size:10px;color:#333;">鲜花</span></div>
-            <div class="cat-item"><span>🎁</span><span style="font-size:10px;color:#333;">伴手礼</span></div>
-        </div>
-        <div class="section-h">人气商家</div>
-        <div class="h-scroll">
-            <div class="p-card" onclick="goToDetail()">
-                <img src="https://placehold.co/140x140/e1f5fe/007AFF?text=Piugo" class="p-img">
-                <div style="font-size: 13px; font-weight: 600; margin-top: 5px;">Piugo Flower</div>
-                <div style="font-size: 10px; color: #999;">弘大 · 鲜花定制</div>
-            </div>
-            <div class="p-card" onclick="goToDetail()">
-                <img src="https://placehold.co/140x140/fff3e0/e65100?text=Cream" class="p-img">
-                <div style="font-size: 13px; font-weight: 600; margin-top: 5px;">CreamLabel</div>
-                <div style="font-size: 10px; color: #999;">圣水洞 · 蛋糕</div>
-            </div>
-        </div>
-        <div class="section-h">热门商品</div>
-        <div class="h-scroll">
-            <div class="p-card" onclick="goToDetail()">
-                <img src="https://placehold.co/140x180/f3e5f5/7b1fa2?text=Cake" class="p-img">
-                <div style="font-size: 13px; font-weight: 600; margin-top: 5px;">复古刻字蛋糕</div>
-                <div style="font-size: 12px; color: #007AFF; font-weight: bold;">₩ 58,000</div>
+        <div style="padding:10px 20px;">
+            <div style="height:140px;background:url('https://placehold.co/600x300/e1f5fe/007aff?text=Seoul+Top+10') center/cover;border-radius:12px;margin-bottom:20px;"></div>
+            <div style="font-weight:bold;font-size:18px;margin-bottom:10px;">热门商品</div>
+            <div style="display:flex;gap:15px;overflow-x:auto;">
+                <div style="min-width:140px;" onclick="openDetail('复古刻字蛋糕', '₩ 58,000')">
+                    <img src="https://placehold.co/140x180/f3e5f5/7b1fa2?text=Cake" style="width:140px;height:140px;border-radius:12px;object-fit:cover;">
+                    <div style="font-size:13px;font-weight:bold;margin-top:5px;">复古刻字蛋糕</div>
+                </div>
+                <div style="min-width:140px;">
+                    <img src="https://placehold.co/140x180/e0f2f1/00695c?text=Tulip" style="width:140px;height:140px;border-radius:12px;object-fit:cover;">
+                    <div style="font-size:13px;font-weight:bold;margin-top:5px;">当季郁金香</div>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="tab-feed" class="screen">
-        <div class="header">
-            <div class="header-title">发现</div>
+        <div class="feed-header">
+            <div style="width:24px;">❤️</div>
+            <div class="feed-tabs">
+                <div>关注</div>
+                <div class="active">商家动态</div>
+                <div>后记</div>
+            </div>
+            <div style="width:24px;">🔍</div>
         </div>
+        
+        <div style="padding:0 10px 10px;display:flex;gap:15px;overflow-x:auto;font-size:12px;color:#666;">
+            <span>餐厅</span><span>私人别墅</span><span>时尚</span><span>伴手礼</span><span style="color:#333;font-weight:bold;">蛋糕</span><span>鲜花</span>
+        </div>
+
         <div class="feed-container">
-            <div class="feed-card">
-                <img src="https://placehold.co/160x200/ffe0b2/e65100?text=Review+1" class="feed-img">
-                <div class="feed-info">
-                    <div class="feed-title">这家蛋糕真的绝了！如果不预约根本吃不到...</div>
-                    <div style="font-size:11px;color:#888;">❤️ 128</div>
+            <div class="feed-card" onclick="openFeedDetail(1)">
+                <img src="https://placehold.co/300x400/ffe0b2/e65100?text=Bear+Cookies" class="feed-img">
+                <div class="feed-title">济州岛满月汀呈送错过我们这家宝宝藏店！</div>
+                <div class="feed-meta">
+                    <div class="feed-user"><div class="user-avatar-xs"></div><span>小意礼礼</span></div>
+                    <div class="feed-likes">❤️ 120</div>
                 </div>
             </div>
-            <div class="feed-card">
-                <img src="https://placehold.co/160x160/e1f5fe/0277bd?text=Review+2" class="feed-img">
-                <div class="feed-info">
-                    <div class="feed-title">送给男朋友的生日惊喜，配送超级快</div>
-                    <div style="font-size:11px;color:#888;">❤️ 56</div>
+            <div class="feed-card" onclick="openFeedDetail(2)">
+                <img src="https://placehold.co/300x350/e1f5fe/0277bd?text=Blue+Cake" class="feed-img">
+                <div class="feed-title">帖子的标题帖子的标题帖子的标题</div>
+                <div class="feed-meta">
+                    <div class="feed-user"><div class="user-avatar-xs"></div><span>CreamLabel</span></div>
+                    <div class="feed-likes">❤️ 45</div>
                 </div>
+            </div>
+            <div class="feed-card" onclick="openFeedDetail(3)">
+                <img src="https://placehold.co/300x300/f3e5f5/7b1fa2?text=Fig+Cake" class="feed-img">
+                <div class="feed-title">终于买到这家蛋糕了！好好吃</div>
+                <div class="feed-meta">
+                    <div class="feed-user"><div class="user-avatar-xs"></div><span>Piugo</span></div>
+                    <div class="feed-likes">❤️ 892</div>
+                </div>
+            </div>
+            <div class="feed-card" onclick="openFeedDetail(4)">
+                <img src="https://placehold.co/300x450/e8f5e9/2e7d32?text=Fried+Chicken" class="feed-img">
+                <div class="feed-title">首尔最好吃的炸鸡</div>
+                <div class="feed-meta">
+                    <div class="feed-user"><div class="user-avatar-xs"></div><span>美食侦探</span></div>
+                    <div class="feed-likes">❤️ 3k</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-feed-detail" class="screen sub-page">
+        <div class="post-header">
+            <div class="back-icon" onclick="closeSubPage('screen-feed-detail')">‹</div>
+            <div class="author-info">
+                <img src="https://placehold.co/100x100/eee/999?text=User" class="author-avatar">
+                <span style="font-weight:600;font-size:14px;">小意礼礼</span>
+            </div>
+            <div style="flex:1;"></div>
+            <button class="follow-btn" id="follow-btn" onclick="toggleFollow()">关注</button>
+            <div style="width:15px;"></div>
+            <i class="fa-solid fa-share" style="font-size:18px;"></i>
+        </div>
+
+        <div style="padding-bottom: 60px;"> <div class="post-gallery" id="post-gallery">
+                <img src="https://placehold.co/375x450/333/fff?text=Cake+Pic+1">
+                <img src="https://placehold.co/375x450/444/fff?text=Cake+Pic+2">
+                <img src="https://placehold.co/375x450/555/fff?text=Cake+Pic+3">
+                <img src="https://placehold.co/375x450/666/fff?text=Cake+Pic+4">
+                <img src="https://placehold.co/375x450/777/fff?text=Cake+Pic+5">
+            </div>
+            <div class="gallery-dots">
+                <div class="g-dot active"></div><div class="g-dot"></div><div class="g-dot"></div><div class="g-dot"></div><div class="g-dot"></div>
+            </div>
+
+            <div class="post-content">
+                <div class="post-title">超有氛围感的 16 种蛋糕 🎂 郑州</div>
+                <div class="post-text">
+                    在这个充满浪漫的季节，选一款独特的蛋糕送给最爱的人吧。无论是复古风还是极简风，都能在这个首尔的街头找到...
+                </div>
+                <div class="post-tags">
+                    #氛围感蛋糕 #高级感蛋糕 #女神蛋糕 #这个蛋糕是懂浪漫的 #ins蛋糕 #首尔探店
+                </div>
+                <div class="post-date">11-26 编辑于 韩国</div>
+            </div>
+
+            <div class="comment-section">
+                <div class="cmt-count">共 9 条评论</div>
+                
+                <div class="cmt-item">
+                    <img src="https://placehold.co/50x50/ffecb3/e65100?text=U1" class="cmt-avatar">
+                    <div class="cmt-body">
+                        <div class="cmt-user">不想写作业</div>
+                        <div class="cmt-text">这是哪一家</div>
+                        <div class="cmt-meta">
+                            <span>07-09</span><span>回复</span>
+                        </div>
+                    </div>
+                    <div class="cmt-like"><i class="fa-regular fa-heart"></i><span>17</span></div>
+                </div>
+
+                <div class="cmt-item">
+                    <img src="https://placehold.co/50x50/e1f5fe/0277bd?text=U2" class="cmt-avatar">
+                    <div class="cmt-body">
+                        <div class="cmt-user">好吃鱼</div>
+                        <div class="cmt-text">这是哪一家的呀</div>
+                        <div class="cmt-meta"><span>10-27 河南</span><span>回复</span></div>
+                    </div>
+                    <div class="cmt-like"><i class="fa-regular fa-heart"></i><span>6</span></div>
+                </div>
+
+                 <div class="cmt-item">
+                    <img src="https://placehold.co/50x50/f3e5f5/7b1fa2?text=U3" class="cmt-avatar">
+                    <div class="cmt-body">
+                        <div class="cmt-user">米朵</div>
+                        <div class="cmt-text">明天要定，求地址</div>
+                        <div class="cmt-meta"><span>11-01 河南</span><span>回复</span></div>
+                    </div>
+                    <div class="cmt-like"><i class="fa-regular fa-heart"></i><span>3</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="post-footer">
+            <div class="fake-input">说点什么...</div>
+            <div class="action-icon" id="like-btn" onclick="toggleLike()">
+                <i class="fa-regular fa-heart" id="like-icon"></i>
+                <span id="like-count">4297</span>
+            </div>
+            <div class="action-icon" id="fav-btn" onclick="toggleFav()">
+                <i class="fa-regular fa-star" id="fav-icon"></i>
+                <span id="fav-count">1092</span>
+            </div>
+            <div class="action-icon">
+                <i class="fa-regular fa-comment-dots"></i>
+                <span>9</span>
             </div>
         </div>
     </div>
 
     <div id="tab-chat" class="screen">
-        <div class="header">
-            <div class="header-title">消息</div>
-        </div>
+        <div class="header"><div class="header-title">消息</div></div>
         <div class="chat-list">
-            <div class="chat-item" onclick="openChat('mumudaebake 首尔店', '🥨')">
-                <div class="chat-avatar" style="background: #fff3e0;">
-                    <span>🥨</span>
-                    <div class="badge">1</div>
+            <div class="chat-item" onclick="openChat()">
+                <div style="width:50px;height:50px;background:#fff3e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;">🥨</div>
+                <div style="flex:1;">
+                    <div style="font-weight:bold;margin-bottom:4px;">mumudaebake 首尔店</div>
+                    <div style="font-size:13px;color:#888;">您好，多买一根蜡烛的话需要加 2000韩元哦</div>
                 </div>
-                <div class="chat-content">
-                    <div class="chat-name">mumudaebake 首尔店</div>
-                    <div class="chat-msg">您好，多买一根蜡烛的话需要加 2000韩元哦</div>
-                </div>
-                <div class="chat-time">14:20</div>
-            </div>
-            <div class="chat-item" onclick="showScreen('screen-delivery')">
-                <div class="chat-avatar" style="background: #e3f2fd;">
-                    <span>🔔</span>
-                </div>
-                <div class="chat-content">
-                    <div class="chat-name">订单状态通知</div>
-                    <div class="chat-msg">您的订单 #20231126 已被骑手接单，点击查看位置</div>
-                </div>
-                <div class="chat-time">昨天</div>
-            </div>
-            <div class="chat-item" onclick="openChat('闺蜜小张', '👩')">
-                <div class="chat-avatar" style="background:#eee;">👩</div>
-                <div class="chat-content">
-                    <div class="chat-name">闺蜜小张</div>
-                    <div class="chat-msg">那家还不错，我也想订</div>
-                </div>
-                <div class="chat-time">周一</div>
             </div>
         </div>
     </div>
 
     <div id="tab-my" class="screen">
-        <div class="profile-header">
-            <div id="my-avatar" class="profile-avatar" style="background-image: url('https://placehold.co/100x100/333/fff?text=User');"></div>
-            <div style="flex: 1;">
-                <h2 id="username-display" style="font-size: 20px; margin-bottom: 4px;">微信用户_Lychee</h2>
-                <div style="font-size: 12px; color: #888;">ID: 8829103 • 普通会员</div>
-            </div>
-            <div style="padding: 8px; background: #f2f2f7; border-radius: 50%; cursor: pointer;" onclick="openSubPage('screen-settings')">⚙️</div>
+        <div style="padding:20px;display:flex;align-items:center;gap:15px;margin-top:44px;background:#fff;">
+            <div style="width:70px;height:70px;border-radius:50%;background:#ddd;"></div>
+            <div><h2 style="font-size:20px;">微信用户_Lychee</h2><div style="font-size:12px;color:#888;">ID: 8829103</div></div>
         </div>
-        <div class="menu-group">
-            <div class="menu-row" onclick="openSubPage('screen-address')">
-                <span>📍 地址管理</span> <span>></span>
-            </div>
-            <div class="menu-row">
-                <span>🎫 优惠券</span> <span>></span>
-            </div>
-        </div>
-        <button class="btn btn-text" onclick="showScreen('screen-login')">退出登录</button>
-    </div>
-
-    <div id="screen-settings" class="screen sub-page">
-        <div class="header"><div class="back-icon" onclick="closeSubPage('screen-settings')">←</div><div class="header-title">个人设置</div><div style="width:40px;"></div></div>
-        <div style="padding:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:15px;">
-            <div style="width:60px;height:60px;background:#eee;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;" onclick="changeAvatar(this,'🐶')">🐶</div>
-            <div style="width:60px;height:60px;background:#eee;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;" onclick="changeAvatar(this,'🐱')">🐱</div>
-        </div>
-    </div>
-
-    <div id="screen-address" class="screen sub-page">
-        <div class="header"><div class="back-icon" onclick="closeSubPage('screen-address')">←</div><div class="header-title">地址管理</div><div style="width:40px;font-size:24px;cursor:pointer;" onclick="addAddressMock()">+</div></div>
-        <div style="padding:20px;" id="addr-list">
-            <div style="background:#fff;padding:15px;border-radius:12px;margin-bottom:12px;border:1px solid #eee;">
-                <div style="font-weight:bold;margin-bottom:6px;">L7 Hongdae Hotel <span style="background:#e3f2fd;color:#007AFF;font-size:10px;padding:2px 6px;border-radius:4px;">默认</span></div>
-                <div style="font-size:13px;color:#666;">Mapo-gu, Yanghwa-ro 141</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="screen-detail" class="screen sub-page">
-        <div style="position:relative;"><img src="https://placehold.co/375x375/e1f5fe/007aff?text=Product" style="width:100%;"><div class="back-icon" style="position:absolute;top:50px;left:20px;background:rgba(255,255,255,0.8);border-radius:50%;text-align:center;line-height:40px;" onclick="closeSubPage('screen-detail')">←</div></div>
-        <div style="padding:20px;background:#fff;border-radius:20px 20px 0 0;margin-top:-30px;position:relative;">
-            <h1 style="font-size:24px;">复古刻字蛋糕</h1>
-            <div style="color:#007AFF;font-size:22px;font-weight:bold;margin:10px 0;">₩ 58,000</div>
-            <div style="height:100px;"></div>
-        </div>
-        <div style="position:fixed;bottom:0;width:100%;padding:20px;background:#fff;border-top:1px solid #eee;display:flex;gap:10px;">
-            <button class="btn btn-primary" style="flex:1;" onclick="openSubPage('screen-payment')">立即预订</button>
-        </div>
-    </div>
-
-    <div id="screen-payment" class="screen sub-page">
-        <div class="header"><div class="back-icon" onclick="closeSubPage('screen-payment')">←</div><div class="header-title">收银台</div><div style="width:40px;"></div></div>
-        <div style="padding:40px 20px;text-align:center;">
-            <div style="font-size:36px;font-weight:bold;">₩ 63,000</div>
-            <button class="btn btn-primary" style="margin-top:40px;" onclick="processPayment()">确认支付</button>
-        </div>
-    </div>
-
-    <div id="screen-delivery" class="screen sub-page">
-        <div class="header"><div class="back-icon" onclick="closeSubPage('screen-delivery')">✕</div><div class="header-title">配送追踪</div><div style="width:40px;"></div></div>
-        <div style="flex:1;background:#e0e0e0;display:flex;align-items:center;justify-content:center;position:relative;">
-            <div style="font-size:20px;color:#666;">[ Map Mockup ]</div>
-            <div style="position:absolute;top:40%;left:60%;background:#fff;padding:5px;border-radius:50%;font-size:24px;">🛵</div>
-        </div>
-        <div style="background:#fff;padding:20px;border-radius:20px 20px 0 0;">
-            <div style="font-weight:bold;font-size:18px;">预计 10分钟后 送达</div>
+        <div style="margin-top:10px;background:#fff;padding:0 20px;">
+            <div style="padding:18px 0;border-bottom:1px solid #eee;">❤️ 我的收藏</div>
+            <div style="padding:18px 0;border-bottom:1px solid #eee;">📍 地址管理</div>
+            <div style="padding:18px 0;border-bottom:1px solid #eee;color:red;" onclick="showScreen('screen-login')">退出登录</div>
         </div>
     </div>
 
     <div id="screen-chat-room" class="screen sub-page">
         <div class="header">
-            <div class="back-icon" onclick="closeSubPage('screen-chat-room')">←</div>
-            <div class="header-title" id="chat-room-title">商家名称</div>
-            <div style="width: 40px; font-size: 20px; text-align: center;">⋯</div>
+            <div class="back-icon" onclick="closeSubPage('screen-chat-room')">‹</div>
+            <div class="header-title">mumudaebake 首尔店</div>
+            <div style="width:40px;">⋯</div>
         </div>
-        
         <div class="chat-room-body" id="chat-history">
-            <div style="text-align: center; color: #ccc; font-size: 12px; margin: 10px 0;">昨天 14:00</div>
-            
-            <div class="msg-row">
-                <div class="chat-avatar" style="width: 36px; height: 36px; font-size: 18px; background: #fff3e0;" id="chat-room-avatar">🥨</div>
-                <div class="msg-bubble msg-left">
-                    您好，欢迎光临 mumudaebake！请问有什么可以帮您？
-                </div>
-            </div>
-
-            <div class="msg-row me">
-                <div class="msg-bubble msg-right">
-                    请问如果我想多加一根蜡烛，需要额外付费吗？
-                </div>
-            </div>
-
-            <div class="msg-row">
-                <div class="chat-avatar" style="width: 36px; height: 36px; font-size: 18px; background: #fff3e0;">🥨</div>
-                <div class="msg-bubble msg-left">
-                    您好，多买一根蜡烛的话需要加 2000韩元哦。
-                </div>
-            </div>
+            <div style="display:flex;gap:8px;"><div style="width:36px;height:36px;background:#fff3e0;border-radius:50%;display:flex;align-items:center;justify-content:center;">🥨</div><div class="msg-bubble msg-left">您好，欢迎光临！</div></div>
         </div>
+        <div style="position:absolute;bottom:0;width:100%;background:#fff;padding:10px;border-top:1px solid #eee;display:flex;gap:10px;padding-bottom:max(10px,env(safe-area-inset-bottom));">
+            <input type="text" id="chat-msg-input" style="flex:1;height:36px;border:1px solid #ddd;border-radius:18px;padding:0 15px;" placeholder="发送消息...">
+            <button onclick="sendMessage()" style="width:36px;height:36px;border-radius:50%;background:#007AFF;color:white;border:none;">↑</button>
+        </div>
+    </div>
 
-        <div class="chat-input-bar">
-            <input type="text" class="chat-input" id="chat-msg-input" placeholder="发送消息...">
-            <button class="chat-send-btn" onclick="sendMessage()">↑</button>
+    <div id="screen-detail" class="screen sub-page">
+        <div style="position:relative;"><img src="https://placehold.co/375x375/f3e5f5/7b1fa2?text=Detail" style="width:100%;"><div class="back-icon" style="position:absolute;top:50px;left:20px;background:rgba(255,255,255,0.8);border-radius:50%;text-align:center;line-height:40px;" onclick="closeSubPage('screen-detail')">‹</div></div>
+        <div style="padding:20px;background:#fff;border-radius:20px 20px 0 0;margin-top:-30px;position:relative;">
+            <h1 style="font-size:24px;">复古刻字蛋糕</h1>
+            <div style="color:#007AFF;font-size:22px;font-weight:bold;margin:10px 0;">₩ 58,000</div>
+        </div>
+        <div style="position:fixed;bottom:0;width:100%;padding:20px;background:#fff;border-top:1px solid #eee;">
+            <button class="btn btn-primary" onclick="alert('进入支付流程')">立即预订</button>
         </div>
     </div>
 
     <div class="tab-bar" id="main-nav" style="display: none;">
-        <div class="tab-item active" onclick="switchTab('tab-home', this)"><div class="tab-icon">🏠</div><div class="tab-text">主页</div></div>
-        <div class="tab-item" onclick="switchTab('tab-feed', this)"><div class="tab-icon">🛍️</div><div class="tab-text">动态</div></div>
-        <div class="tab-item" onclick="switchTab('tab-chat', this)"><div class="tab-icon">💬</div><div class="tab-text">消息</div></div>
-        <div class="tab-item" onclick="switchTab('tab-my', this)"><div class="tab-icon">👤</div><div class="tab-text">我的</div></div>
+        <div class="tab-item active" onclick="switchTab('tab-home', this)"><div>🏠</div><div style="font-size:10px;">主页</div></div>
+        <div class="tab-item" onclick="switchTab('tab-feed', this)"><div>🛍️</div><div style="font-size:10px;">动态</div></div>
+        <div class="tab-item" onclick="switchTab('tab-chat', this)"><div>💬</div><div style="font-size:10px;">消息</div></div>
+        <div class="tab-item" onclick="switchTab('tab-my', this)"><div>👤</div><div style="font-size:10px;">我的</div></div>
     </div>
 </div>
 
 <script>
     /* --- 核心逻辑 --- */
-    function nextOb(nextId) { document.querySelectorAll('.onboard-screen').forEach(el => el.classList.remove('active')); document.getElementById(nextId).classList.add('active'); }
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(el => { if(!el.classList.contains('sub-page')) el.classList.remove('active'); });
         document.getElementById(id).classList.add('active');
@@ -382,77 +368,89 @@
     }
     function openSubPage(id) { document.getElementById(id).classList.add('active'); }
     function closeSubPage(id) { document.getElementById(id).classList.remove('active'); }
+    
     function login(isGuest) {
-        if(isGuest) { document.getElementById('username-display').innerText = "游客 (Guest)"; document.getElementById('my-avatar').style.backgroundImage = "url('https://placehold.co/100x100/eee/999?text=Guest')"; }
         setTimeout(() => { switchTab('tab-home', document.querySelectorAll('.tab-item')[0]); }, 500);
     }
-    function switchTab(screenId, element) { showScreen(screenId); document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active')); if(element) element.classList.add('active'); }
-    function goToDetail() { openSubPage('screen-detail'); }
-    function processPayment() { 
-        const btn = document.querySelector('#screen-payment .btn-primary'); 
-        btn.innerText = "支付中..."; btn.style.background = "#ccc";
-        setTimeout(() => { alert("支付成功！"); btn.innerText = "确认支付"; btn.style.background = "#007AFF"; closeSubPage('screen-payment'); closeSubPage('screen-detail'); openSubPage('screen-delivery'); }, 1500); 
+    
+    function switchTab(screenId, element) {
+        showScreen(screenId);
+        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
     }
-    function changeAvatar(element, emoji) {
-        document.getElementById('my-avatar').style.backgroundImage = 'none'; document.getElementById('my-avatar').style.backgroundColor = '#e3f2fd'; document.getElementById('my-avatar').innerText = emoji; 
-        document.getElementById('my-avatar').style.display = 'flex'; document.getElementById('my-avatar').style.alignItems = 'center'; document.getElementById('my-avatar').style.justifyContent = 'center'; document.getElementById('my-avatar').style.fontSize = '30px';
-        setTimeout(() => { closeSubPage('screen-settings'); }, 300);
+
+    // --- 动态详情页逻辑 ---
+    function openFeedDetail(id) {
+        // 模拟数据填充
+        const gallery = document.getElementById('post-gallery');
+        gallery.scrollLeft = 0; // 重置滚动
+        openSubPage('screen-feed-detail');
     }
-    function addAddressMock() { alert("添加地址界面模拟"); }
 
-    /* --- Chat Logic (New) --- */
-    let currentChatAvatar = '🥨';
-
-    function openChat(name, avatarEmoji) {
-        document.getElementById('chat-room-title').innerText = name;
-        currentChatAvatar = avatarEmoji;
-        // 更新聊天室内的头像
-        const avatars = document.querySelectorAll('#chat-room-avatar, .chat-room-body .msg-row:not(.me) .chat-avatar');
-        avatars.forEach(el => el.innerText = avatarEmoji);
+    function toggleLike() {
+        const icon = document.getElementById('like-icon');
+        const count = document.getElementById('like-count');
+        const btn = document.getElementById('like-btn');
         
-        openSubPage('screen-chat-room');
-        scrollToBottom();
+        if (btn.classList.contains('active')) {
+            btn.classList.remove('active');
+            icon.classList.remove('fa-solid');
+            icon.classList.add('fa-regular');
+            count.innerText = parseInt(count.innerText) - 1;
+        } else {
+            btn.classList.add('active');
+            icon.classList.remove('fa-regular');
+            icon.classList.add('fa-solid');
+            icon.style.animation = 'heartPop 0.3s ease';
+            count.innerText = parseInt(count.innerText) + 1;
+            setTimeout(() => icon.style.animation = '', 300);
+        }
     }
 
+    function toggleFav() {
+        const icon = document.getElementById('fav-icon');
+        const btn = document.getElementById('fav-btn');
+        
+        if (btn.classList.contains('fav-active')) {
+            btn.classList.remove('fav-active');
+            icon.classList.remove('fa-solid');
+            icon.classList.add('fa-regular');
+        } else {
+            btn.classList.add('fav-active');
+            icon.classList.remove('fa-regular');
+            icon.classList.add('fa-solid');
+        }
+    }
+
+    function toggleFollow() {
+        const btn = document.getElementById('follow-btn');
+        if (btn.innerText === "关注") {
+            btn.innerText = "已关注";
+            btn.classList.add('followed');
+        } else {
+            btn.innerText = "关注";
+            btn.classList.remove('followed');
+        }
+    }
+
+    // --- 聊天逻辑 ---
+    function openChat() { openSubPage('screen-chat-room'); }
     function sendMessage() {
         const input = document.getElementById('chat-msg-input');
         const text = input.value.trim();
         if(!text) return;
-
-        // 1. 添加“我”的消息
-        addMessageBubble(text, true);
+        const history = document.getElementById('chat-history');
+        history.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-top:15px;"><div class="msg-bubble msg-right">${text}</div></div>`;
         input.value = '';
-
-        // 2. 模拟对方回复 (1秒后)
+        history.scrollTop = history.scrollHeight;
         setTimeout(() => {
-            const replies = ["好的，没问题！", "稍等我确认一下哦。", "收到，谢谢您的订单！", "这个需要定制，大概需要2小时。"];
-            const randomReply = replies[Math.floor(Math.random() * replies.length)];
-            addMessageBubble(randomReply, false);
+            history.innerHTML += `<div style="display:flex;gap:8px;margin-top:15px;"><div style="width:36px;height:36px;background:#fff3e0;border-radius:50%;display:flex;align-items:center;justify-content:center;">🥨</div><div class="msg-bubble msg-left">好的，收到！</div></div>`;
+            history.scrollTop = history.scrollHeight;
         }, 1000);
     }
 
-    function addMessageBubble(text, isMe) {
-        const history = document.getElementById('chat-history');
-        const msgRow = document.createElement('div');
-        msgRow.className = isMe ? 'msg-row me' : 'msg-row';
-        
-        let html = '';
-        if(!isMe) {
-            html += `<div class="chat-avatar" style="width: 36px; height: 36px; font-size: 18px; background: #fff3e0;">${currentChatAvatar}</div>`;
-        }
-        
-        const bubbleClass = isMe ? 'msg-right' : 'msg-left';
-        html += `<div class="msg-bubble ${bubbleClass}">${text}</div>`;
-        
-        msgRow.innerHTML = html;
-        history.appendChild(msgRow);
-        scrollToBottom();
-    }
-
-    function scrollToBottom() {
-        const history = document.getElementById('chat-history');
-        history.scrollTop = history.scrollHeight;
-    }
+    // --- 详情逻辑 ---
+    function openDetail() { openSubPage('screen-detail'); }
 </script>
 </body>
 </html>
